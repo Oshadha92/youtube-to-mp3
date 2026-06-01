@@ -1,0 +1,43 @@
+name: YouTube to MP3 (workflow_dispatch)
+
+on:
+  workflow_dispatch:
+    inputs:
+      youtube_url:
+        description: 'YouTube URL to download'
+        required: true
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run downloader
+        env:
+          YOUTUBE_URL: ${{ github.event.inputs.youtube_url }}
+        run: |
+          mkdir -p artifacts
+          python downloader.py "$YOUTUBE_URL"
+
+      - name: Upload MP3 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-mp3
+          path: artifacts/*.mp3
